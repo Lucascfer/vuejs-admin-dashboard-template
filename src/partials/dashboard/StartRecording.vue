@@ -26,7 +26,7 @@ export default {
     },
     methods: {
         emitAudioUrl(url) {
-            this.$emit('audio-recorded', url);
+            this.$emit('audio-recorded', url, this.recordingTime);
         },
         toggleRecording() {
             this.isRecording ? this.stopRecording() : this.startRecording();
@@ -64,7 +64,7 @@ export default {
         stopRecording() {
             this.mediaRecorder.stop();
             this.mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav'});
                 const audioUrlValue = URL.createObjectURL(audioBlob);
                 this.audioChunks = [];
                 this.isRecording = false;
