@@ -104,7 +104,7 @@ export default {
   setup() {
     const sidebarOpen = ref(false);
     const createAudio = ref(true);
-    const recordings = ref([]);
+    const recordings = ref([]); //backend
     const currentPlaying = ref(null);
 
     const togglePlayPause = (index) => {
