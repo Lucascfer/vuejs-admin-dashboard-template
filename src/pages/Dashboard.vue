@@ -26,16 +26,39 @@
                 <input type="file" @change="handleFileUpload" class="hidden" />
               </label>
             </div>
+          </div>
 
-            <div class="p-4">
+          <div class="m-4">
+            <div
+              class="border border-dashed border-gray-400 p-10 w-full flex align-center flex-col justify-center items-center   max-w-9xl mx-auto p-4">
               <button @click="toggleRecording" :class="isRecording ? 'bg-red-500' : 'bg-green-500'"
                 class="text-white py-2 px-4 rounded">
                 {{ isRecording ? 'Stop Recording' : 'Start Recording' }}
               </button>
+              <div class="text-sm text-gray-500 text-center">
+                {{ formatTime(recordingTime) }}
+              </div>
             </div>
             
+            <span
+              class="text-black font-semibold text-xl m-2 text-center block before:content-['-'] after:content-['-'] before:mr-2 after:ml-2">
+              Or
+            </span>
+
+            <div
+              class="drag-drop-area border border-dashed border-gray-400 p-10 w-full flex align-center flex-col justify-center items-center space-x-4  max-w-9xl mx-auto p-4"
+              @dragover.prevent @dragenter.prevent="handleDragEnter" @dragleave="handleDragLeave" @drop="handleDrop">
+              <p v-if="!isDragging">Drag or drop file here to update</p>
+              <p v-else>Drop the file now...</p>
+            </div>
           </div>
+
           <audio v-if="audioUrl" :src="audioUrl" controls class="mt-4 w-full"></audio>
+
+          <div v-else class="text-center text-xl">
+            You have no recordings yet <br>
+            <span class="text-black font-semibold">Start by making a recording.</span>
+          </div>
 
         </div>
       </main>
@@ -66,45 +89,85 @@ export default {
       mediaRecorder: ref(null),
       audioChunks: [],
       audioUrl: ref(null),
-      isRecording: ref(false)
+      isRecording: ref(false),
+      isDragging: ref(false),
+      recordingTime: ref(0)
     }
   },
 
   methods: {
+    handleFileUpload() {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.audioUrl = reader.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+
     toggleRecording() {
       this.isRecording ? this.stopRecording() : this.startRecording();
     },
-    startRecording() {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(stream => {
-            this.mediaRecorder = new MediaRecorder(stream);
-            this.mediaRecorder.ondataavailable = event => {
-              this.audioChunks.push(event.data);
-            };
-            this.mediaRecorder.onstop = () => {
-              const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
-              this.audioUrl = URL.createObjectURL(audioBlob);
-              this.audioChunks = [];
-              // upload 'audioUrl'to backend
-            };
-            this.mediaRecorder.start();
-            this.isRecording = true;
-          })
-          .catch(error => {
-            console.error('Error accessing microphone:', error);
-          });
-      } else {
-        console.error('The browser does not support audio recording.');
+    startTimer() {
+      this.recordingTime = 0;
+      this.timer = setInterval(() => {
+        this.recordingTime++;
+      }, 1000);
+    },
+    stopTimer() {
+      clearInterval(this.timer);
+      this.timer = null;
+    },
+    formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    },
+    beforeDestroy() {
+      if (this.timer) {
+        clearInterval(this.timer);
       }
     },
+    async startRecording() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaRecorder = new MediaRecorder(stream);
+      this.mediaRecorder.start();
+      this.mediaRecorder.ondataavailable = (event) => {
+        this.audioChunks.push(event.data);
+      };
+      this.isRecording = true;
+      this.startTimer();
+    },
     stopRecording() {
-      if (this.mediaRecorder) {
-        this.mediaRecorder.stop();
+      this.mediaRecorder.stop();
+      this.mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        this.audioUrl = audioUrl;
+        this.audioChunks = [];
         this.isRecording = false;
+        this.stopTimer();
+      };
+    },
+
+    handleDragEnter() {
+      this.isDragging = true;
+    },
+
+    handleDragLeave() {
+      this.isDragging = false;
+    },
+
+    handleDrop(event) {
+      this.isDragging = false;
+      const files = event.dataTransfer.files;
+      if (files.length) {
+        this.audioUrl = URL.createObjectURL(files[0]);
+
       }
     }
-
   }
 }
 
