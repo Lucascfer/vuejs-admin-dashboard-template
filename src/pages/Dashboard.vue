@@ -59,7 +59,7 @@
                       @pause="setCurrentPlaying(null), playing = !playing">
                     </audio>
                     <div class="flex justify-evenly w-full">
-                      <div class="text-lg font-semibold cursor-pointer" @dblclick="editName(index)">{{ recording.name }}
+                      <div class="text-lg font-semibold cursor-pointer w-1/2 px-4" @dblclick="editName(index)">{{ recording.name }}
                       </div>
                       <div class="mr-8 flex flex-row space-x-2 w-full justify-end items-center">
                         <div class="text-sm">{{ recording.date }}</div>
