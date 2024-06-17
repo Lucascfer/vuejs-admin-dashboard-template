@@ -55,19 +55,15 @@
                 class="flex items-center bg-blue-500 text-white p-4 rounded-lg shadow-lg">
                 <div class="flex-grow">
                   <div class="flex items-center space-x-4">
-                    <audio ref="audio" :src="recording.url" @play="setCurrentPlaying(index), actuallyPlaying = index"
-                      @pause="setCurrentPlaying(null), playing = !playing" class="hidden">
+                    <audio controls ref="audio" :src="recording.url" @play="setCurrentPlaying(index), actuallyPlaying = index"
+                      @pause="setCurrentPlaying(null), playing = !playing">
                     </audio>
-
-                    <button @click="togglePlayPause(index), playing = !playing" class="text-white">
-                      <div class="material-icons">{{ playing ? 'pause' : 'play_arrow' }}</div>
-                    </button>
                     <div class="flex justify-evenly w-full">
                       <div class="text-lg font-semibold cursor-pointer" @dblclick="editName(index)">{{ recording.name }}
                       </div>
                       <div class="mr-8 flex flex-row space-x-2 w-full justify-end items-center">
                         <div class="text-sm">{{ recording.date }}</div>
-                        <div class="text-sm">{{ formatTime(recording.length) }}</div>
+                        <div class="text-sm">{{ recording.length !== Infinity ? formatTime(recording.length) : '0:00' }}</div>
                       </div>
                     </div>
                   </div>
